@@ -97,17 +97,17 @@ class LECentral {
     }
     
     func connectToWatchHash(watchIdentifier: UUID) {
-        WatchConnectionState.current = .waitingForBluetoothToEnable(watch: nil)
+        WatchConnection.shared.current = .waitingForBluetoothToEnable(watch: nil)
         waitForReady { [self] in
             let device = getAssociatedWatchFromIdentifier(identifier: watchIdentifier)
             ProtocolComms.shared.systemHandler.waitNegotiationComplete { [self] in
-                WatchConnectionState.current = WatchConnectionState.connected(watch: self.targetDevice!)
+                WatchConnection.shared.current = .connected(watch: self.targetDevice!)
             }
             if let device = device {
-                WatchConnectionState.current = WatchConnectionState.connecting(watch: device)
+                WatchConnection.shared.current = .connecting(watch: device)
                 targetDevice = device
-                if let serv = LEPeripheral.shared.gattService {
-                    serv.targetWatchIdentifier = watchIdentifier
+                if let service = LEPeripheral.shared.gattService {
+                    service.targetWatchIdentifier = watchIdentifier
                 }
                 centralController.stopScan()
                 centralController.centralManager.cancelPeripheralConnection(device.peripheral)
@@ -115,7 +115,7 @@ class LECentral {
                 peripheralClient!.connect()
                 ProtocolComms.shared.startPacketSendingLoop()
             }else {
-                WatchConnectionState.current = WatchConnectionState.disconnected
+                WatchConnection.shared.current = .disconnected
                 DDLogError("LECentral: Couldn't find peripheral from scanned devices or iOS side")
             }
         }
@@ -128,21 +128,30 @@ class LECentral {
     
     private func connStatusChange(connStatus: ConnectivityStatus) {
         if connStatus.pairingErrorCode != .noError {
-            WatchConnectionState.current = WatchConnectionState.waitingForReconnect(watch: targetDevice)
+            WatchConnection.shared.current = .waitingForReconnect(watch: targetDevice)
             DDLogError("LECentral: Error \(connStatus.pairingErrorCode)")
         } else if connStatus.connected == true && connStatus.paired == true {
-            DDLogInfo("LECentral: Connected")
+            DDLogInfo("LECentral: Paired")
             if let targetDevice = targetDevice {
                 if !PersistentStorage.shared.devices.contains(where: { $0.identifier == targetDevice.peripheral.identifier }) {
-                    var devs = PersistentStorage.shared.devices
-                    devs.append(targetDevice.toStoredPebbleDevice())
-                    PersistentStorage.shared.devices = devs
+                    var devices = PersistentStorage.shared.devices
+                    devices.append(targetDevice.toStoredPebbleDevice())
+                    PersistentStorage.shared.devices = devices
                 }
             }
         }else if connStatus.connected == true && connStatus.paired == false {
-            DDLogInfo("LECentral: Pairing")
+            DDLogInfo("LECentral: Connected")
+            if let targetDevice = targetDevice {
+                if !PersistentStorage.shared.devices.contains(where: { $0.identifier == targetDevice.peripheral.identifier }) {
+                    var devices = PersistentStorage.shared.devices
+                    devices.append(targetDevice.toStoredPebbleDevice())
+                    PersistentStorage.shared.devices = devices
+                }
+            }
+            WatchConnection.shared.current = .connected(watch: targetDevice)
         }else {
             DDLogInfo("LECentral: Connecting")
+            WatchConnection.shared.current = .connecting(watch: targetDevice)
         }
     }
 }

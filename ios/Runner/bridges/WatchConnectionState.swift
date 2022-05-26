@@ -17,12 +17,7 @@ enum WatchConnectionState {
 }
 
 extension WatchConnectionState {
-    static var current = WatchConnectionState.disconnected {
-        didSet {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "WatchConnectionState.current"), object: self.current)
-        }
-    }
-    
+
     static func ~= (lhs: Self, rhs: Self) -> Bool {
         switch (lhs, rhs) {
         case
@@ -50,16 +45,6 @@ extension WatchConnectionState {
             return watch
         case .waitingForBluetoothToEnable(let watch):
             return watch
-        }
-    }
-    
-    static func next() -> Promise<WatchConnectionState> {
-        return Promise {seal in
-            var token: NSObjectProtocol?
-            token = NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "WatchConnectionState.current"), object: nil, queue: nil) { notif in
-                seal.fulfill(notif.object! as! WatchConnectionState)
-                NotificationCenter.default.removeObserver(token!)
-            }
         }
     }
 }
