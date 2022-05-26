@@ -20,7 +20,7 @@ class ConnectionFlutterBridge: NSObject, ConnectionControl {
     
     func isConnectedWithError(_ error: AutoreleasingUnsafeMutablePointer<FlutterError?>) -> BooleanWrapper? {
         let ret = BooleanWrapper()
-        ret.value = NSNumber(value: WatchConnectionState.current ~= .connected(watch: nil))
+        ret.value = NSNumber(value: WatchConnection.shared.current ~= .connected(watch: nil))
         return ret
     }
     
@@ -44,24 +44,18 @@ class ConnectionFlutterBridge: NSObject, ConnectionControl {
     }
     
     func observeConnectionChangesWithError(_ error: AutoreleasingUnsafeMutablePointer<FlutterError?>) {
-        //TODO
-        connStateObserver = NotificationCenter.default.addObserver(
-            forName: NSNotification.Name(rawValue: "WatchConnectionState.current"),
-            object: nil,
-            queue: nil
-        ) {notif in
-            let status = notif.object as! WatchConnectionState
+        WatchConnection.shared.observe { status in
             let bluetoothDevice = status.watchOrNil
             let model = WatchMetadataStore.shared.lastConnectedWatchModel
             let devicePigeon = WatchMetadataStore.shared.lastConnectedWatchMetadata?.toPigeon(device: bluetoothDevice, model: model)
-                ?? WatchVersion.WatchVersionResponse().toPigeon(device: bluetoothDevice, model: model)
-            
+            ?? WatchVersion.WatchVersionResponse().toPigeon(device: bluetoothDevice, model: model)
+
             self.connectionCallbacks.onWatchConnectionStateChangedNewState(
                 WatchConnectionStatePigeon.make(
                     withIsConnected: NSNumber(value: status ~= .connected(watch: nil)),
                     isConnecting: NSNumber(value: status ~= .connecting(watch: nil) ||
-                                           status ~= .waitingForReconnect(watch: nil) /*||
-                                           status ~= .waitingForBluetoothToEnable(watch: nil)*/),
+                                           status ~= .waitingForReconnect(watch: nil) ||
+                                           status ~= .waitingForBluetoothToEnable(watch: nil)),
                     currentWatchAddress: bluetoothDevice?.peripheral.identifier.uuidString,
                     currentConnectedWatch: devicePigeon)
             ) {_ in}

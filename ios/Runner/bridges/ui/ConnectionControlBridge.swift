@@ -8,11 +8,13 @@
 import Foundation
 class ConnectionControlBridge: NSObject, UiConnectionControl {
     func connect(toWatchMacAddress macAddress: StringWrapper, error: AutoreleasingUnsafeMutablePointer<FlutterError?>) {
-        WatchConnectionState.next().done { state in
-            if (state ~= .connected(watch: nil)) {
+        WatchConnection.shared.observe { state in
+            switch state {
+            case .connected:
                 self.pairCallbacks.onWatchPairCompleteAddress(macAddress) {_ in }
+            default: break
             }
-        }.cauterize()
+        }
         LECentral.shared.connectToWatchHash(watchIdentifier: UUID(uuidString: macAddress.value!)!)
     }
     

@@ -27,9 +27,9 @@ class ScanFlutterBridge: NSObject, ScanControl {
                     list.value = foundDevices.map {
                         $0.toPigeon()
                     }
-                    scanCallbacks.onScanUpdatePebbles(list) {_ in }
+                    self.scanCallbacks.onScanUpdatePebbles(list) {_ in }
                 }, scanEnded: {
-                    scanCallbacks.onScanStopped() {_ in }
+                    self.scanCallbacks.onScanStopped() {_ in }
                 })
             }
         }
