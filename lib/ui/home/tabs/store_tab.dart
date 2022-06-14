@@ -11,12 +11,21 @@ class StoreTab extends StatefulWidget implements CobbleScreen {
 class _StoreTabState extends State<StoreTab> {
   @override
   Widget build(BuildContext context) {
-    return CobbleScaffold.tab(
-      child: WebView(
+    var webView = WebView(
         initialUrl:
             "https://store-beta.rebble.io/?native=true&platform=android",
         javascriptMode: JavascriptMode.unrestricted,
-      ),
+        navigationDelegate: (NavigationRequest request) {
+          if (request.url.startsWith('pebble')) {
+            // button on the store website to install was tapped
+            print("install ${request.url}");
+            return NavigationDecision.prevent;
+          }
+          print('allowing navigation to $request');
+          return NavigationDecision.navigate;
+        });
+    return CobbleScaffold.tab(
+      child: webView,
     );
   }
 }
