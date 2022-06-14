@@ -6,6 +6,7 @@ import 'package:cobble/localization/localization.dart';
 import 'package:cobble/localization/localization_delegate.dart';
 import 'package:cobble/localization/model/model_generator.model.dart';
 import 'package:cobble/ui/splash/splash_page.dart';
+import 'package:cobble/ui/home/home_page.dart';
 import 'package:cobble/ui/theme/cobble_scheme.dart';
 import 'package:cobble/ui/theme/cobble_theme.dart';
 import 'package:cobble/ui/theme/use_platform_brightness.dart';
@@ -69,6 +70,9 @@ class MyApp extends HookWidget {
       schemeData: CobbleSchemeData.fromBrightness(brightness),
       child: MaterialApp(
         onGenerateTitle: (context) => tr.common.title,
+        onGenerateRoute: (route) {
+          print(route);
+        },
         theme: CobbleTheme.appTheme(brightness),
         home: SplashPage(),
         // List all of the app's supported locales here

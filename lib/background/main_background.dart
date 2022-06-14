@@ -92,6 +92,8 @@ class BackgroundReceiver implements TimelineCallbacks {
     final lastConnectedWatch = prefs.getLastConnectedWatchAddress();
 
     bool unfaithful = false;
+    Log.d("Last watch: $lastConnectedWatch");
+    Log.d("Current watch: ${watch.address}");
     if (lastConnectedWatch != watch.address) {
       Log.d("Different watch connected than the last one.");
       unfaithful = true;

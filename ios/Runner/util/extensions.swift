@@ -93,9 +93,11 @@ extension SystemService {
 
 extension BlobDBService {
     func sendPromise(packet: BlobCommand, priority: PacketPriority) -> Promise<BlobResponse> {
-        return Promise<BlobResponse> { seal in
+        Promise<BlobResponse> { seal in
             DispatchQueue.main.async {
-                self.send(packet: packet, priority: priority, completionHandler: kotlinSuspendResolver(seal: seal))
+                self.send(packet: packet, priority: priority) { response, error in
+                    seal.resolve(response, error)
+                }
             }
         }
     }
